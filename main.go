@@ -1,24 +1,26 @@
 package main
 
 import (
-	"github.com/h8gi/canvas"
-	"golang.org/x/image/colornames"
+	"github.com/faiface/pixel"
+	"github.com/faiface/pixel/pixelgl"
 )
 
+func run() {
+	cfg := pixelgl.WindowConfig{
+		Title:  "go-boids",
+		Bounds: pixel.R(0, 0, 1024, 768),
+	}
+
+	win, err := pixelgl.NewWindow(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	for !win.Closed() {
+		win.Update()
+	}
+}
+
 func main() {
-	c := canvas.New(&canvas.NewCanvasOptions{
-		Width:     600,
-		Height:    400,
-		FrameRate: 60,
-		Title:     "hello canvas!",
-	})
-	c.Setup(func(ctx *canvas.Context) {
-		ctx.SetColor(colornames.Green)
-	})
-	c.Draw(func(ctx *canvas.Context) {
-		if ctx.MouseDragged() {
-			ctx.DrawCircle(ctx.MouseX(), ctx.MouseY(), 5)
-			ctx.Fill()
-		}
-	})
+	pixelgl.Run(run)
 }
