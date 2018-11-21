@@ -7,6 +7,10 @@ import (
 	"golang.org/x/image/colornames"
 )
 
+// Define Bird shape constants
+var BirdDefaultEdgeLength = 30.0
+var BirdDefaultBaseLength = 20.0
+
 func centerWindow(win *pixelgl.Window) {
 	x, y := pixelgl.PrimaryMonitor().Size()
 	width, height := win.Bounds().Size().XY()
@@ -26,8 +30,8 @@ func generateBird(direction int) *imdraw.IMDraw {
 	bird := imdraw.New(nil)
 	bird.Color = colornames.Black
 	bird.Push(pixel.V(0, 0))
-	bird.Push(pixel.V(20, 0))
-	bird.Push(pixel.V(10, 30))
+	bird.Push(pixel.V(BirdDefaultBaseLength, 0))
+	bird.Push(pixel.V(BirdDefaultBaseLength/2, BirdDefaultEdgeLength))
 	bird.Polygon(1)
 
 	return bird
