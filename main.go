@@ -21,9 +21,8 @@ const birdDefaultBaseLength = 20.0
 
 // Boid represents a bird present on the screen.
 type Boid struct {
-	direction float64
-	xPos      float64
-	yPos      float64
+	centroid Coordinate
+	points   []Coordinate
 }
 
 // Coordinate represents an x,y position on the canvas.
@@ -42,28 +41,39 @@ func centerWindow(win *pixelgl.Window) {
 	)
 }
 
-// Generates a new IMDraw object representing a bird,
-// pointed at a specified direction and positioned at
-// a coordinate on the canvas.
+// Generates a new Boid instance comprising of the vectors
+// of each point and the centroid.
 // The direction starts at 0 for North, and increases
 // clockwise to 359. The coordinate is comprised of
-// an X and Y value, bounded to the size of the canvas.
-func generateBoid(boid *Boid) *imdraw.IMDraw {
-	fmt.Printf("xCoord: %f, yCoord: %f\n", boid.xPos, boid.yPos)
+// an X and Y value signalling the bottom-left corner
+// of the boid.
+func generateBoid(direction float64, coords Coordinate) Boid {
+	fmt.Printf("xCoord: %f, yCoord: %f\n", coords.x, coords.y)
 
 	// Calculate vectors for each point of the triange
-	bottomLeft := Coordinate{boid.xPos, boid.yPos}
-	bottomRight := Coordinate{boid.xPos + birdDefaultBaseLength, boid.yPos}
-	top := Coordinate{boid.xPos + (birdDefaultBaseLength / 2), boid.yPos + birdDefaultEdgeLength}
+	bottomLeft := Coordinate{coords.x, coords.y}
+	bottomRight := Coordinate{coords.x + birdDefaultBaseLength, coords.y}
+	top := Coordinate{coords.x + (birdDefaultBaseLength / 2), coords.y + birdDefaultEdgeLength}
 
-	bird := imdraw.New(nil)
-	bird.Color = colornames.Black
-	bird.Push(pixel.V(bottomLeft.x, bottomLeft.y))
-	bird.Push(pixel.V(bottomRight.x, bottomRight.y))
-	bird.Push(pixel.V(top.x, top.y))
-	bird.Polygon(1)
+	// Calculate the coordinates for the centre of the triangle
+	centre := Coordinate{(bottomLeft.x + bottomRight.x + top.x) / 3, (bottomLeft.y + bottomRight.y + top.y) / 3}
 
-	return bird
+	boid := Boid{centroid: centre, points: []Coordinate{bottomLeft, bottomRight, top}}
+
+	return boid
+}
+
+func drawBoid(boid Boid, win *pixelgl.Window) {
+	boidRender := imdraw.New(nil)
+	boidRender.Color = colornames.Black
+
+	for _, point := range boid.points {
+		boidRender.Push(pixel.V(point.x, point.y))
+	}
+
+	boidRender.Polygon(1)
+
+	boidRender.Draw(win)
 }
 
 func simulationLoop() {
@@ -86,8 +96,9 @@ func simulationLoop() {
 	for !win.Closed() {
 		win.Clear(colornames.Skyblue)
 
-		boid := generateBoid(&Boid{direction: 0, xPos: x, yPos: y})
-		boid.Draw(win)
+		boid := generateBoid(0, Coordinate{x: x, y: y})
+		drawBoid(boid, win)
+
 		win.Update()
 
 		x += velocity
