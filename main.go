@@ -19,6 +19,18 @@ const canvasHeight = 768
 const birdDefaultEdgeLength = 30.0
 const birdDefaultBaseLength = 20.0
 
+// Boid represents a bird present on the screen.
+type Boid struct {
+	direction float64
+	xPos      float64
+	yPos      float64
+}
+
+// Coordinate represents an x,y position on the canvas.
+type Coordinate struct {
+	x, y float64
+}
+
 func centerWindow(win *pixelgl.Window) {
 	x, y := pixelgl.PrimaryMonitor().Size()
 	width, height := win.Bounds().Size().XY()
@@ -36,13 +48,19 @@ func centerWindow(win *pixelgl.Window) {
 // The direction starts at 0 for North, and increases
 // clockwise to 359. The coordinate is comprised of
 // an X and Y value, bounded to the size of the canvas.
-func generateBird(direction int, xCoord float64, yCoord float64) *imdraw.IMDraw {
-	fmt.Printf("xCoord: %f, yCoord: %f\n", xCoord, yCoord)
+func generateBoid(boid *Boid) *imdraw.IMDraw {
+	fmt.Printf("xCoord: %f, yCoord: %f\n", boid.xPos, boid.yPos)
+
+	// Calculate vectors for each point of the triange
+	bottomLeft := Coordinate{boid.xPos, boid.yPos}
+	bottomRight := Coordinate{boid.xPos + birdDefaultBaseLength, boid.yPos}
+	top := Coordinate{boid.xPos + (birdDefaultBaseLength / 2), boid.yPos + birdDefaultEdgeLength}
+
 	bird := imdraw.New(nil)
 	bird.Color = colornames.Black
-	bird.Push(pixel.V(xCoord, yCoord))
-	bird.Push(pixel.V(xCoord+birdDefaultBaseLength, yCoord))
-	bird.Push(pixel.V(xCoord+(birdDefaultBaseLength/2), yCoord+birdDefaultEdgeLength))
+	bird.Push(pixel.V(bottomLeft.x, bottomLeft.y))
+	bird.Push(pixel.V(bottomRight.x, bottomRight.y))
+	bird.Push(pixel.V(top.x, top.y))
 	bird.Polygon(1)
 
 	return bird
@@ -67,8 +85,9 @@ func simulationLoop() {
 
 	for !win.Closed() {
 		win.Clear(colornames.Skyblue)
-		bird := generateBird(0, x, y)
-		bird.Draw(win)
+
+		boid := generateBoid(&Boid{direction: 0, xPos: x, yPos: y})
+		boid.Draw(win)
 		win.Update()
 
 		x += velocity
