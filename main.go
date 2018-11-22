@@ -6,17 +6,18 @@ import (
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
+	"math"
 )
 
 // Define velocity
-const velocity = 0.1
+const velocity = 0.001
 
 // Define world constants
 const canvasWidth = 1024
 const canvasHeight = 768
 
 // Define Bird shape constants
-const birdDefaultEdgeLength = 30.0
+const birdDefaultEdgeLength = 20.0
 const birdDefaultBaseLength = 20.0
 
 // Boid represents a bird present on the screen.
@@ -58,9 +59,24 @@ func generateBoid(direction float64, coords Coordinate) Boid {
 	// Calculate the coordinates for the centre of the triangle
 	centre := Coordinate{(bottomLeft.x + bottomRight.x + top.x) / 3, (bottomLeft.y + bottomRight.y + top.y) / 3}
 
-	boid := Boid{centroid: centre, points: []Coordinate{bottomLeft, bottomRight, top}}
+	fmt.Printf("centre: %+v\n", centre)
 
-	return boid
+	// Revise the vectors for each point, taking into account the supplied
+	// direction.
+	points := []Coordinate{bottomLeft, bottomRight, top}
+
+	fmt.Println(points)
+
+	for i := range points {
+		point := &points[i]
+
+		point.x = math.Cos(direction)*point.x + math.Sin(direction)*point.y + (centre.x - centre.x*math.Cos(direction) + centre.y*math.Sin(direction))
+		point.y = -math.Sin(direction)*point.x + math.Cos(direction)*point.y + (centre.y + centre.x*math.Sin(direction) - centre.y*math.Cos(direction))
+	}
+
+	fmt.Println(points)
+
+	return Boid{centroid: centre, points: points}
 }
 
 func drawBoid(boid Boid, win *pixelgl.Window) {
@@ -74,6 +90,10 @@ func drawBoid(boid Boid, win *pixelgl.Window) {
 	boidRender.Polygon(1)
 
 	boidRender.Draw(win)
+}
+
+func degreesToRadians(degree float64) float64 {
+	return degree * (math.Pi / 180.0)
 }
 
 func simulationLoop() {
@@ -90,19 +110,22 @@ func simulationLoop() {
 
 	centerWindow(win)
 
-	x := 0.0
-	y := 0.0
+	x := float64(canvasWidth / 2)
+	y := 300.0
+
+	angle := 0.0
 
 	for !win.Closed() {
 		win.Clear(colornames.Skyblue)
 
-		boid := generateBoid(0, Coordinate{x: x, y: y})
+		boid := generateBoid(degreesToRadians(angle), Coordinate{x: x, y: y})
 		drawBoid(boid, win)
 
 		win.Update()
 
-		x += velocity
-		y += velocity
+		// x += velocity
+		// y += velocity
+		angle += velocity * 10
 	}
 }
 
